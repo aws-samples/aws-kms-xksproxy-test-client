@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# shellcheck disable=SC2015
+# shellcheck disable=SC2154
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+source ./utils/test_encrypt_decrypt_utils.sh
+source ./utils/tests_for_decrypt_only_key.sh
+
+if ((${#@})); then
+    counts_file="$1/$(basename "$0").counts"
+    declare -r counts_file
+    main "$DECRYPT_ONLY_KEY_ID"
+    echo "$success $failure" > "$counts_file"
+else
+    check_environment
+    main "$DECRYPT_ONLY_KEY_ID"
+    summarize "$success" "$failure"
+fi
