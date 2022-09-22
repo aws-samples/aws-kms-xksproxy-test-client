@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# shellcheck disable=SC2015
+# shellcheck disable=SC2154
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+
+declare -i success=0 failure=0
+
+main() {
+    json_body() {
+        local -r kms_operation=$1
+        local -r uuid="$(uuidgen)"
+        cat <<-EOM
+{
+    "requestMetadata": {
+        "awsPrincipalArn": "$aws_principal_arn",
+        "kmsKeyArn": "$aws_key_arn",
+        "kmsOperation": "$kms_operation",
+        "kmsRequestId": "${uuid,,}",
+        "kmsViaService": "$kms_via_service"
+    }
+}
+EOM
+    }
+
+    run_test "keys/$KEY_ID/metadata" "$(json_body "DescribeKey")" \
+        "GetKeyMetadata for DescribeKey" \
+        "\"keyStatus\":"  && ((++success)) || ((++failure))
+    run_test "keys/$KEY_ID/metadata" "$(json_body "CreateKey")" \
+        "GetKeyMetadata for CreateKey" \
+        "\"keyStatus\":" && ((++success)) || ((++failure))
+    run_test "keys/$KEY_ID/metadata" "{}" \
+        "GetKeyMetadata without requestMetadata" \
+        "ValidationException" && ((++success)) || ((++failure))
+    # shellcheck disable=SC2154
+    run_test "keys/$KEY_ID/metadata" "$json_body_with_empty_request_metadata" \
+        "GetKeyMetadata with empty requestMetadata" \
+        "ValidationException" && ((++success)) || ((++failure))
+    run_test "keys/non_existing_key/metadata" "$(json_body "DescribeKey")" \
+        "GetKeyMetadata for a non-existent key" \
+        "KeyNotFoundException" && ((++success)) || ((++failure))
+    SIGV4_ACCESS_KEY_ID=Invalid$SIGV4_ACCESS_KEY_ID \
+        run_test "keys/$KEY_ID/metadata" "$(json_body "DescribeKey")" \
+            "GetKeyMetadata with an invalid Sigv4 access id" \
+            "AuthenticationFailedException" && ((++success)) || ((++failure))
+    SIGV4_SECRET_ACCESS_KEY=Invalid$SIGV4_SECRET_ACCESS_KEY \
+        run_test "keys/$KEY_ID/metadata" "$(json_body "DescribeKey")" \
+            "GetKeyMetadata with an invalid Sigv4 access key" \
+            "AuthenticationFailedException" && ((++success)) || ((++failure))
+    URI_PREFIX=$URI_PREFIX/invalid \
+        run_test "keys/$KEY_ID/metadata" "$(json_body "DescribeKey")" \
+            "GetKeyMetadata with an invalid URI prefix" \
+            "InvalidUriPathException" && ((++success)) || ((++failure))
+}
+
+if ((${#@})); then
+    counts_file="$1/$(basename "$0").counts"
+    declare -r counts_file
+    main
+    echo "$success $failure" > "$counts_file"
+else
+    check_environment
+    main
+    summarize "$success" "$failure"
+fi
