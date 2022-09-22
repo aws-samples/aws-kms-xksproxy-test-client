@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# shellcheck disable=SC2015
+# shellcheck disable=SC2154
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+source ./utils/test_encrypt_decrypt_utils.sh
+
+declare -i success=0 failure=0
+
+main() {
+    local -r plaintext="cGxhaW50ZXh0Cg=="
+    local -r aad="cHJvamVjdD1uaWxlLGRlcGFydG1lbnQ9bWFya2V0aW5n"
+    local -r aad2="cHJvamVjdD1ibHVlLGRlcGFydG1lbnQ9ZmluYW5jZQ=="
+
+    run_test "keys/non_existing_key/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext")" \
+        "Encrypt with a non-existing key" \
+        "KeyNotFoundException" && ((++success)) || ((++failure))
+
+    run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")")" \
+        "Encrypt with missing plaintext" \
+        "ValidationException" && ((++success)) || ((++failure))
+
+    SIGV4_ACCESS_KEY_ID=Invalid$SIGV4_ACCESS_KEY_ID \
+        run_test "keys/$KEY_ID/encrypt" \
+            "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext")" \
+            "Encrypt with an invalid Sigv4 access id" \
+            "AuthenticationFailedException" && ((++success)) || ((++failure))
+
+    SIGV4_SECRET_ACCESS_KEY=Invalid$SIGV4_SECRET_ACCESS_KEY \
+        run_test "keys/$KEY_ID/encrypt" \
+            "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext")" \
+            "Encrypt with an invalid SigV4 access key" \
+            "AuthenticationFailedException" && ((++success)) || ((++failure))
+
+    URI_PREFIX=$URI_PREFIX/invalid \
+        run_test "keys/$KEY_ID/encrypt" \
+            "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext")" \
+            "Encrypt with an invalid URI path" \
+            "InvalidUriPathException" && ((++success)) || ((++failure))
+
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
+        "Encrypt with AAD to be followed by Decrypt without AAD" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
+            "Decrypt with missing AAD" \
+            "InvalidCiphertextException" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
+        "Encrypt with AAD to be followed by Decrypt without AAD" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
+            "Decrypt with missing AAD" \
+            "InvalidCiphertextException" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
+        "Encrypt with AAD to be followed by Decrypt with a different AAD" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag" "$aad2")" \
+            "Decrypt with a different AAD than that used in Encrypt" \
+            "InvalidCiphertextException" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    local -r plaintext2="SGVsbG8gV29ybGQh"
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext2")" \
+        "Encrypt without AAD to be followed by Decrypt" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
+            "Decrypt without AAD" \
+            "\"plaintext\":" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext2" $aad)" \
+        "Encrypt with AAD to be followed by Decrypt" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag" $aad)" \
+            "Decrypt with the same AAD" \
+            "\"plaintext\":" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    local -ir delay_judgement=1
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext2" $aad "SHA_256")" \
+        "Encrypt with AAD and CDIV to be followed by Decrypt" \
+        "\"ciphertextDataIntegrityValue\":" \
+        $delay_judgement; then
+        if verify_cdiv "$aad"; then
+            ((++success))
+            print_test_pass
+            prepare_decrypt
+            run_test "keys/$KEY_ID/decrypt" \
+                "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag" $aad)" \
+                "Decrypt with the same AAD" \
+                "\"plaintext\":" && ((++success)) || ((++failure))
+        else
+            ((++failure))
+            print_test_fail "due to ${red}CDIV verification failure!${reset}"
+        fi
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext2" "" "SHA_256")" \
+        "Encrypt with CDIV but without AAD to be followed by Decrypt" \
+        "\"ciphertextDataIntegrityValue\":" \
+        $delay_judgement; then
+        if verify_cdiv ""; then
+            ((++success))
+            print_test_pass
+            prepare_decrypt
+            run_test "keys/$KEY_ID/decrypt" \
+                "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
+                "Decrypt without AAD" \
+                "\"plaintext\":" && ((++success)) || ((++failure))
+        else
+            ((++failure))
+            print_test_fail "due to ${red}CDIV verification failure!${reset}"
+        fi
+    else
+        ((++failure))
+    fi
+
+    local large_aad large_plaintext
+    # The base64 command on AL2 requires explicitly disabling line wrapping
+    local base64_command
+    if base64 -w 0 <<< "" 2>/dev/null; then
+        base64_command="base64 -w 0"
+    else
+        base64_command="base64"
+    fi
+    large_aad="$(dd if=/dev/urandom bs=4096 count=2 2>/dev/null | $base64_command)"
+    large_plaintext="$(dd if=/dev/urandom bs=4096 count=1 2>/dev/null | $base64_command)"
+
+    # Reduce verbosity to get around failure when run on AL2
+    if VERBOSE="-i" run_test "keys/$KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$large_plaintext" "$large_aad")" \
+        "Encrypt with large plaintext and large AAD to be followed by Decrypt" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        VERBOSE="-i" run_test "keys/$KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag" "$large_aad")" \
+            "Decrypt with large ciphertext and large AAD" \
+            "\"plaintext\":" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+}
+
+if ((${#@})); then
+    tmpdir="$1"
+    declare -r tmpdir
+
+    counts_file="$tmpdir/$(basename "$0").counts"
+    declare -r counts_file
+    main
+    echo "$success $failure" > "$counts_file"
+else
+    check_environment
+    tmpdir="$(mktemp -d)"
+    declare -r tmpdir
+    trap 'rm -rf -- "$tmpdir"' exit
+
+    main
+    summarize "$success" "$failure"
+fi

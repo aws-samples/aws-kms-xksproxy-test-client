@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+usage() {
+    cat <<-EOM
+Version 1.0.3.  Sample usages:
+
+    # Show this help message.
+    ./test-xks-proxy -h
+
+    # Set some environment variables to run the tests:
+
+    # Change this to your XKS Proxy endpoint to test.
+    export XKS_PROXY_HOST="is-load.xksproxy.kms.aws.dev"
+    # Change this to the URI_PREFIX of a logical keystore supported by your XKS Proxy.
+    export URI_PREFIX="example/uri/path/prefix"
+    # Change this to the Access key ID for request authentication to your logical keystore.
+    export SIGV4_ACCESS_KEY_ID="AKIA4GBY3I6JCE5M2HPM"
+    # Change this to the Secret access key for request authentication to your logical keystore.
+    export SIGV4_SECRET_ACCESS_KEY="1234567890123456789012345678901234567890123="
+    # Change this to a test key id supported by your logical keystore.
+    export KEY_ID="foo"
+
+    # Run the tests
+    ./test-xks-proxy
+
+    # Run all the tests including the use of encrypt-only key, decrypt-only key and
+    # key that can neither encrypt nor decrypt. You can specify the respective key id's with
+    # the environment variables ENCRYPT_ONLY_KEY_ID, DECRYPT_ONLY_KEY_ID and IMPOTENT_KEY_ID.
+    ./test-xks-proxy -a
+
+    # Run all the tests in debug mode, printing the actual curl commands
+    DEBUG=1 ./test-xks-proxy
+
+    # To test against the endpoint http://xks-proxy.mydomain.com
+    XKS_PROXY_HOST=xks-proxy.mydomain.com \\
+        SCHEME= \\
+        ./test-xks-proxy
+
+    # To enable mTLS, a client side SSL key and certificate would need to be specified.
+    # The command to run the tests would be something like:
+    XKS_PROXY_HOST=xks-proxy_with_mtls_enabled.mydomain.com \\
+       MTLS="--key client_key.pem --cert client_cert.pem" \\
+       ./test-xks-proxy
+
+You can similarly override many of the other environment variables to get the desired behavior.
+Simply type "cat utils/test_config.sh" to see the full list; or check out README.md.
+EOM
+}
+
+# Any of these as the first parameter would show the usage info.
+declare -Ar help_options=(
+    [h]=1
+    [help]=1
+    [-h]=1
+    [-H]=1
+    [-help]=1
+    [--help]=1
+    [v]=1
+    [version]=1
+    [-v]=1
+    [-V]=1
+    [-version]=1
+    [--version]=1
+)
+
+declare -Ar all_options=(
+    [a]=1
+    [all]=1
+    [-a]=1
+    [-A]=1
+    [-all]=1
+    [--all]=1
+)
+
+if (( ${#@} > 1 || ${#@} == 1 && help_options[$1] )); then
+    usage
+    exit
+fi
+
+declare -r all_test=$(( ${#@} == 1 && all_options[$1] ))
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+check_environment
+
+tmpdir="$(mktemp -d)"
+declare -r tmpdir
+trap 'rm -rf -- "$tmpdir"' exit
+
+declare -i total_success=0 total_failure=0
+declare -a counts
+
+declare -a scripts=(
+    "test_get_health_status"
+    "test_get_key_metadata"
+    "test_encrypt_decrypt"
+)
+
+((all_test)) && scripts+=(
+    "test_encrypt_only_key"
+    "test_decrypt_only_key"
+    "test_impotent_key"
+)
+
+for script in "${scripts[@]}"; do
+    ./"$script" "$tmpdir"
+    read -d '' -r -a counts <<< "$(cat "$tmpdir/$script.counts")"
+    ((total_success += counts[0]))
+    ((total_failure += counts[1]))
+done
+
+summarize "$total_success" "$total_failure"

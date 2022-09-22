@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# shellcheck disable=SC2015
+# shellcheck disable=SC2154
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+source ./utils/test_encrypt_decrypt_utils.sh
+
+declare -i success=0 failure=0
+
+main() {
+    local -r plaintext="cGxhaW50ZXh0Cg=="
+    local -r aad="cHJvamVjdD1uaWxlLGRlcGFydG1lbnQ9bWFya2V0aW5n"
+
+    if run_test "keys/$ENCRYPT_ONLY_KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext")" \
+        "Encrypt without AAD to be followed by Decrypt using an encrypt-only key" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$ENCRYPT_ONLY_KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
+            "Decrypt without AAD using an encrypt-only key" \
+            "InvalidKeyUsageException" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$ENCRYPT_ONLY_KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
+        "Encrypt with AAD to be followed by Decrypt using an encrypt-only key" \
+        "\"ciphertext\":"; then
+        ((++success))
+        prepare_decrypt
+        run_test "keys/$ENCRYPT_ONLY_KEY_ID/decrypt" \
+            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag" $aad)" \
+            "Decrypt with the same AAD using an encrypt-only key" \
+            "InvalidKeyUsageException" && ((++success)) || ((++failure))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$ENCRYPT_ONLY_KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad "SHA_256")" \
+        "Encrypt with AAD and CDIV using an encrypt-only key" \
+        "InvalidKeyUsageException"; then
+        ((++success))
+    else
+        ((++failure))
+    fi
+
+    if run_test "keys/$ENCRYPT_ONLY_KEY_ID/encrypt" \
+        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" "" "SHA_256")" \
+        "Encrypt with CDIV but without AAD using an encrypt-only key" \
+        "InvalidKeyUsageException"; then
+        ((++success))
+    else
+        ((++failure))
+    fi
+}
+
+if ((${#@})); then
+    counts_file="$1/$(basename "$0").counts"
+    declare -r counts_file
+    main
+    echo "$success $failure" > "$counts_file"
+else
+    check_environment
+    main
+    summarize "$success" "$failure"
+fi
