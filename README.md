@@ -22,7 +22,6 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 * `sed`
 * `sha256sum`
 * `tr`
-* `which`
 * `xxd`
 
 ## Examples
@@ -127,6 +126,8 @@ and is typically pre-installed in a Linux distribution.
 
 ## Change log
 
+* Mon Sep 26 2022 Hanson Char <hchar@amazon.com> - 1.0.4
+    - Make scripts work when run in AWS Lambda
 * Mon Sep 5 2022 Hanson Char <hchar@amazon.com> - 1.0.3
     - Initial release
 

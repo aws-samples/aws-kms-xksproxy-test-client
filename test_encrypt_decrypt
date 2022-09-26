@@ -196,7 +196,11 @@ if ((${#@})); then
     echo "$success $failure" > "$counts_file"
 else
     check_environment
-    tmpdir="$(mktemp -d)"
+    # Use -p /tmp to get around AWS Lambda which by default has a read-only file system
+    if ! tmpdir="$(mktemp -d -p /tmp 2>/dev/null)"; then
+        # mktemp in Mac OSX doesn't support -p
+        tmpdir="$(mktemp -d)"
+    fi
     declare -r tmpdir
     trap 'rm -rf -- "$tmpdir"' exit
 
