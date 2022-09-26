@@ -92,7 +92,7 @@ EOM
     print_header "Testing $label ..."
 
     echo "Request body ..."
-    jq <<< "$json_body"
+    jq '.' <<< "$json_body"
     echo -e "${reset}"
 
     # shellcheck disable=SC2207
@@ -107,7 +107,7 @@ EOM
     echo -e "${reset}\nResponse body ..."
     last_json_body="${arr[n-1]}"
     if [[ "$last_json_body" =~ ^\{.*\}$ ]]; then
-        jq <<< "$last_json_body"
+        jq '.' <<< "$last_json_body"
     else
         echo "$last_json_body"
     fi
@@ -151,7 +151,7 @@ check_environment() {
 
         local -r extract_version_cmd="$3"
 
-        if ! which "$cmd" > /dev/null; then
+        if ! type "$cmd" > /dev/null; then
             abort "Please install $cmd $min_major.$min_minor or later for use with this test client."
         fi
 
@@ -164,10 +164,9 @@ check_environment() {
             abort "Please install $cmd $min_major.$min_minor or later for use with this test client."
         fi
     }
-
     local cmd
     for cmd in awk base64 head mktemp printf read sed sha256sum tr xxd; do
-        if which $cmd > /dev/null; then
+        if type $cmd > /dev/null; then
             ((DEBUG)) && echo "$cmd is available ..." > /dev/stderr
         else
             abort "Please install $cmd for use with this test client."

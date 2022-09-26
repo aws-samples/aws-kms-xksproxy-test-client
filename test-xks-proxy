@@ -5,7 +5,7 @@
 
 usage() {
     cat <<-EOM
-Version 1.0.3.  Sample usages:
+Version 1.0.4.  Sample usages:
 
     # Show this help message.
     ./test-xks-proxy -h
@@ -86,7 +86,11 @@ declare -r all_test=$(( ${#@} == 1 && all_options[$1] ))
 source ./utils/test_utils.sh
 check_environment
 
-tmpdir="$(mktemp -d)"
+# Use -p /tmp to get around AWS Lambda which by default has a read-only file system
+if ! tmpdir="$(mktemp -d -p /tmp 2>/dev/null)"; then
+    # mktemp in Mac OSX doesn't support -p
+    tmpdir="$(mktemp -d)"
+fi
 declare -r tmpdir
 trap 'rm -rf -- "$tmpdir"' exit
 
