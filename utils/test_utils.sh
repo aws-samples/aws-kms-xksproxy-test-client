@@ -6,10 +6,12 @@
 # shellcheck disable=SC1091
 source ./utils/test_config.sh
 
-# https://en.wikipedia.org/wiki/Box-drawing_character#Box_Drawing
-declare -r top_left="\u250f" horizontal="\u2501" top_right="\u2513" vertical="\u2503"
-declare -r bottom_left="\u2517" bottom_right="\u251b"
-declare red="\e[1;31m" green="\e[1;32m" yellow="\e[1;33m" reset="\e[0m"
+if ((ASCII_ESCAPE)); then
+    # https://en.wikipedia.org/wiki/Box-drawing_character#Box_Drawing
+    declare -r top_left="\u250f" horizontal="\u2501" top_right="\u2513" vertical="\u2503"
+    declare -r bottom_left="\u2517" bottom_right="\u251b"
+    declare red="\e[1;31m" green="\e[1;32m" yellow="\e[1;33m" reset="\e[0m"
+fi
 
 # shellcheck disable=SC2034
 declare -r aws_principal_arn="arn:aws:iam::123456789012:user/Alice"
@@ -92,7 +94,11 @@ EOM
     print_header "Testing $label ..."
 
     echo "Request body ..."
-    jq '.' <<< "$json_body"
+    if ((ASCII_ESCAPE)); then
+        jq '.' -C <<< "$json_body"
+    else
+        jq '.' -M -a <<< "$json_body"
+    fi
     echo -e "${reset}"
 
     # shellcheck disable=SC2207
@@ -107,7 +113,11 @@ EOM
     echo -e "${reset}\nResponse body ..."
     last_json_body="${arr[n-1]}"
     if [[ "$last_json_body" =~ ^\{.*\}$ ]]; then
-        jq '.' <<< "$last_json_body"
+        if ((ASCII_ESCAPE)); then
+            jq '.' -C <<< "$last_json_body"
+        else
+            jq '.' -M -a <<< "$last_json_body"
+        fi
     else
         echo "$last_json_body"
     fi
