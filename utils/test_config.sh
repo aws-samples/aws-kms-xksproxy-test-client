@@ -15,6 +15,7 @@ declare -r DEFAULT_SECURE=""
 declare -r DEFAULT_VERBOSE="-i"
 declare -r DEFAULT_MTLS=""
 declare -ri DEFAULT_DEBUG=0
+declare -ri DEFAULT_ASCII_ESCAPE=1
 
 # xks-proxy endpoint
 declare XKS_PROXY_HOST=${XKS_PROXY_HOST-${DEFAULT_XKS_PROXY_HOST}}
@@ -48,9 +49,13 @@ declare SECURE=${SECURE-${DEFAULT_SECURE}}
 
 # DEBUG=0 to disable debugging output to stderr
 # DEBUG=1 to enable debugging output to stderr, including the actual curl command being run
-declare DEBUG=${DEBUG-${DEFAULT_DEBUG}}
+declare -i DEBUG=${DEBUG-${DEFAULT_DEBUG}}
 
 # Used to specify both a client-side SSL private key and SSL certifcate
 # for performing mutual TLS with the xks-proxy.
 # Example: MTLS_KEY="--key mtls/test_key.pem --cert mtls/test_cert.pem"
 declare MTLS=${MTLS-${DEFAULT_MTLS}}
+
+# ASCII_ESCAPE=0 to disable the use of ASCII Escape codes in the output
+# ASCII_ESCAPE=1 to enable the use of ASCII Escape codes in the output
+declare -i ASCII_ESCAPE=${ASCII_ESCAPE-${DEFAULT_ASCII_ESCAPE}}
