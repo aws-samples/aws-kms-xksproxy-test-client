@@ -5,7 +5,7 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 
 # Version
 
-`1.0.3`
+`1.0.4`
 
 ## Dependencies
 
