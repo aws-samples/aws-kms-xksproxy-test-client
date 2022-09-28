@@ -1,5 +1,5 @@
 NAME    := xks-proxy-test-client
-VERSION := 1.0.5
+VERSION := 1.0.6
 RELEASE := 0
 SOURCE_BUNDLE := $(NAME)-$(VERSION)-$(RELEASE).txz
 PROJECT_ROOTDIR := $(shell basename $(CURDIR))

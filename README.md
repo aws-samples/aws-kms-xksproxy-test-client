@@ -5,7 +5,7 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 
 # Version
 
-`1.0.5`
+`1.0.6`
 
 ## Dependencies
 
@@ -130,6 +130,8 @@ and is typically pre-installed in a Linux distribution.
 
 ## Change log
 
+* Wed Sep 28 2022 Hanson Char <hchar@amazon.com> - 1.0.6
+    - Fix "Segmentation fault: 11" when run on OSX
 * Mon Sep 26 2022 Hanson Char <hchar@amazon.com> - 1.0.5
     - Supports ASCII_ESCAPE to toggle the use of ASCII Escape codes in the output
 * Mon Sep 26 2022 Hanson Char <hchar@amazon.com> - 1.0.4

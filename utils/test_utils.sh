@@ -58,7 +58,6 @@ EOM
     # without the "--silent" parameter curl could fail on AL2 with large AAD and plaintext
     build_command() {
         local -r uri_target="$1" json_body="$2"
-        local command
         cat <<-EOM
 curl $SCHEME$XKS_PROXY_HOST/$URI_PREFIX/kms/xks/v1/$uri_target \\
     --silent $VERBOSE $SECURE $MTLS \\
@@ -74,7 +73,7 @@ EOM
 
     post() {
         local -r uri_target="$1" json_body="$2"
-        command="$(build_command "$@")"
+        local -r command="$(build_command "$@")"
 
         if ((DEBUG)); then
             # shellcheck disable=SC2086

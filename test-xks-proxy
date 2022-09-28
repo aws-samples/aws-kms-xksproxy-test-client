@@ -5,7 +5,7 @@
 
 usage() {
     cat <<-EOM
-Version 1.0.5.  Sample usages:
+Version 1.0.6.  Sample usages:
 
     # Show this help message.
     ./test-xks-proxy -h
@@ -50,37 +50,22 @@ Simply type "cat utils/test_config.sh" to see the full list; or check out README
 EOM
 }
 
-# Any of these as the first parameter would show the usage info.
-declare -Ar help_options=(
-    [h]=1
-    [help]=1
-    [-h]=1
-    [-H]=1
-    [-help]=1
-    [--help]=1
-    [v]=1
-    [version]=1
-    [-v]=1
-    [-V]=1
-    [-version]=1
-    [--version]=1
-)
-
-declare -Ar all_options=(
-    [a]=1
-    [all]=1
-    [-a]=1
-    [-A]=1
-    [-all]=1
-    [--all]=1
-)
-
-if (( ${#@} > 1 || ${#@} == 1 && help_options[$1] )); then
-    usage
-    exit
-fi
-
-declare -r all_test=$(( ${#@} == 1 && all_options[$1] ))
+# https://wiki.bash-hackers.org/howto/getopts_tutorial
+while getopts ":ha" opt; do
+  case $opt in
+    h)
+      usage
+      exit
+      ;;
+    a)
+      declare -r all_test=1
+      ;;
+    \?)
+      usage
+      exit
+      ;;
+  esac
+done
 
 # shellcheck disable=SC1091
 source ./utils/test_utils.sh
