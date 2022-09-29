@@ -162,7 +162,7 @@ main() {
     local large_aad large_plaintext
     # The base64 command on AL2 requires explicitly disabling line wrapping
     local base64_command
-    if base64 -w 0 <<< "" 2>/dev/null; then
+    if base64 -w 0 <<< "" 1>/dev/null 2>&1; then
         base64_command="base64 -w 0"
     else
         base64_command="base64"
