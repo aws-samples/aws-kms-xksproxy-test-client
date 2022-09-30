@@ -8,9 +8,10 @@ source ./utils/test_config.sh
 
 if ((ASCII_ESCAPE)); then
     # https://en.wikipedia.org/wiki/Box-drawing_character#Box_Drawing
-    declare -r top_left="\u250f" horizontal="\u2501" top_right="\u2513" vertical="\u2503"
-    declare -r bottom_left="\u2517" bottom_right="\u251b"
-    declare red="\e[1;31m" green="\e[1;32m" yellow="\e[1;33m" reset="\e[0m"
+    declare -r top_left=$'\u250f' horizontal=$'\u2501' top_right=$'\u2513' vertical=$'\u2503'
+    declare -r bottom_left=$'\u2517' bottom_right=$'\u251b'
+    declare -r red=$'\e[1;31m' green=$'\e[1;32m' yellow=$'\e[1;33m' reset=$'\e[0m'
+    declare -r tick=$'\u2705' cross=$'\u274C' question=$'\u2753'
 fi
 
 # shellcheck disable=SC2034
@@ -32,13 +33,17 @@ declare -r json_body_with_empty_request_metadata
 # Not thread safe
 declare last_json_body
 
+red() { echo -n "$red$1$reset"; }
+green() { echo -n "$green$1$reset"; }
+yellow() { echo -n "$yellow$1$reset"; }
+
 print_test_pass() {
-    echo -e "${green}PASSED${reset} with expected response"
+    echo "$(green PASSED) with expected response $tick"
 }
 
 print_test_fail() {
     local -r reason="$1"
-    echo -e "${red}FAILED${reset} $reason"
+    echo "$(red FAILED) $reason $cross"
 }
 
 run_test() {
@@ -49,9 +54,9 @@ run_test() {
         local -ir len=$(( ${#message} + 2 ))
         cat > /dev/stderr <<EOM
 
-$(echo -e $top_left)$(eval "printf '$horizontal%.0s' {1..$len}")$(echo -e $top_right)
-$(echo -e $vertical) $message $(echo -e $vertical)
-$(echo -e $bottom_left)$(eval "printf '$horizontal%.0s' {1..$len}")$(echo -e $bottom_right)
+$top_left$(eval "printf '$horizontal%.0s' {1..$len}")$top_right
+$vertical $message $vertical
+$bottom_left$(eval "printf '$horizontal%.0s' {1..$len}")$bottom_right
 EOM
     }
 
@@ -79,10 +84,10 @@ EOM
             # shellcheck disable=SC2086
             cat > /dev/stderr <<EOM
 
-$(echo -e $yellow)** Debugging - command to be run:
+${yellow}** Debugging - command to be run:
 
 $command
-$(echo -e $reset)
+$reset
 EOM
         fi
 
@@ -98,7 +103,7 @@ EOM
     else
         jq '.' -M -a <<< "$json_body"
     fi
-    echo -e "${reset}"
+    echo "$reset"
 
     # shellcheck disable=SC2207
     local -r response="$(post "$uri_target" "$json_body" 2>&1)"
@@ -136,12 +141,12 @@ summarize() {
     local -ir success=$1 failure=$2
     if ((failure)); then
         if ((success)); then
-            echo -e "\nA total of $green$success tests PASSED$reset and $red$failure tests FAILED$reset."
+            echo -e "\n$question A total of $(green "$success tests PASSED") and $(red "$failure tests FAILED")."
         else
-            echo -e "\n${red}All ${failure} tests FAILED.${reset}"
+            echo -e "\n$cross $(red "All ${failure} tests FAILED.")"
         fi
     else
-        echo -e "\n${green}All ${success} tests PASSED.${reset}"
+        echo -e "\n$tick $(green "All ${success} tests PASSED.")"
     fi
 }
 
