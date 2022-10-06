@@ -6,7 +6,7 @@
 # shellcheck disable=SC1091
 source ./utils/test_config.sh
 
-if ((ASCII_ESCAPE)); then
+if ((ANSI_ESCAPE)); then
     # https://en.wikipedia.org/wiki/Box-drawing_character#Box_Drawing
     declare -r top_left=$'\u250f' horizontal=$'\u2501' top_right=$'\u2513' vertical=$'\u2503'
     declare -r bottom_left=$'\u2517' bottom_right=$'\u251b'
@@ -98,7 +98,7 @@ EOM
     print_header "Testing $label ..."
 
     echo "Request body ..."
-    if ((ASCII_ESCAPE)); then
+    if ((ANSI_ESCAPE)); then
         jq '.' -C <<< "$json_body"
     else
         jq '.' -M -a <<< "$json_body"
@@ -117,7 +117,7 @@ EOM
     echo -e "${reset}\nResponse body ..."
     last_json_body="${arr[n-1]}"
     if [[ "$last_json_body" =~ ^\{.*\}$ ]]; then
-        if ((ASCII_ESCAPE)); then
+        if ((ANSI_ESCAPE)); then
             jq '.' -C <<< "$last_json_body"
         else
             jq '.' -M -a <<< "$last_json_body"

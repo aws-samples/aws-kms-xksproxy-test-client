@@ -15,7 +15,7 @@ declare -r DEFAULT_SECURE=""
 declare -r DEFAULT_VERBOSE="-i"
 declare -r DEFAULT_MTLS=""
 declare -ri DEFAULT_DEBUG=0
-declare -ri DEFAULT_ASCII_ESCAPE=1
+declare -ri DEFAULT_ANSI_ESCAPE=1
 
 # xks-proxy endpoint
 declare XKS_PROXY_HOST=${XKS_PROXY_HOST-${DEFAULT_XKS_PROXY_HOST}}
@@ -56,6 +56,6 @@ declare -i DEBUG=${DEBUG-${DEFAULT_DEBUG}}
 # Example: MTLS_KEY="--key mtls/test_key.pem --cert mtls/test_cert.pem"
 declare MTLS=${MTLS-${DEFAULT_MTLS}}
 
-# ASCII_ESCAPE=0 to disable the use of ASCII Escape codes in the output
-# ASCII_ESCAPE=1 to enable the use of ASCII Escape codes in the output
-declare -i ASCII_ESCAPE=${ASCII_ESCAPE-${DEFAULT_ASCII_ESCAPE}}
+# ANSI_ESCAPE=0 to disable the use of ANSI Escape codes in the output
+# ANSI_ESCAPE=1 to enable the use of ANSI Escape codes in the output
+declare -i ANSI_ESCAPE=${ANSI_ESCAPE-${DEFAULT_ANSI_ESCAPE}}
