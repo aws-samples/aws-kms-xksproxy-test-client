@@ -5,7 +5,7 @@
 
 usage() {
     cat <<-EOM
-Version 1.0.6.  Sample usages:
+Version 1.1.0.  Sample usages:
 
     # Show this help message.
     ./test-xks-proxy -h

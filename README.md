@@ -5,7 +5,7 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 
 # Version
 
-`1.0.6`
+`1.1.0`
 
 ## Dependencies
 
@@ -115,9 +115,9 @@ The following environment variables can be used to override the default settings
     * Default to `0` to disable debugging output
     * Can be set to `1` to enable debugging output, printing the actual `curl` command being run
 
-* `ASCII_ESCAPE` - used to toggle the use of ASCII Escape codes in the output
-    * Default to `1` to enable the use of ASCII Escape codes in the output
-    * Can be set to `0` to disable the use of ASCII Escape codes in the output
+* `ANSI_ESCAPE` - used to toggle the use of ANSI Escape codes in the output
+    * Default to `1` to enable the use of ANSI Escape codes in the output
+    * Can be set to `0` to disable the use of ANSI Escape codes in the output
 
 ## Notes
 
@@ -130,10 +130,12 @@ and is typically pre-installed in a Linux distribution.
 
 ## Change log
 
+* Wed Oct 5 2022 Hanson Char <hchar@amazon.com> - 1.1.0
+    - Fix typo, changing "ASCII_ESCAPE" to "ANSI_ESCAPE"
 * Wed Sep 28 2022 Hanson Char <hchar@amazon.com> - 1.0.6
     - Fix "Segmentation fault: 11" when run on OSX
 * Mon Sep 26 2022 Hanson Char <hchar@amazon.com> - 1.0.5
-    - Supports ASCII_ESCAPE to toggle the use of ASCII Escape codes in the output
+    - Supports ANSI_ESCAPE to toggle the use of ANSI Escape codes in the output
 * Mon Sep 26 2022 Hanson Char <hchar@amazon.com> - 1.0.4
     - Make scripts work when run in AWS Lambda
 * Mon Sep 5 2022 Hanson Char <hchar@amazon.com> - 1.0.3
