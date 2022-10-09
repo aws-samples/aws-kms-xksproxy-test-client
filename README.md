@@ -1,3 +1,5 @@
+![](https://github.com/aws-samples/aws-kms-xksproxy-test-client/actions/workflows/ci.yml/badge.svg)
+
 # aws-kms-xksproxy-test-client
 
 This package provides a sample `curl` based utility for reference by external customers to test against
@@ -28,13 +30,15 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 
 ```bash
 # Change this to your XKS Proxy endpoint to test.
-export XKS_PROXY_HOST="is-load.xksproxy.kms.aws.dev"
+export XKS_PROXY_HOST="myxksproxy.domain.com"
 # Change this to the URI_PREFIX of a logical keystore supported by your XKS Proxy.
 export URI_PREFIX="example/uri/path/prefix"
 # Change this to the Access key ID for request authentication to your logical keystore.
-export SIGV4_ACCESS_KEY_ID="AKIA4GBY3I6JCE5M2HPM"
+# Valid characters are a-z, A-Z, 0-9, /, - (hyphen), and _ (underscore)
+export SIGV4_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
 # Change this to the Secret access key for request authentication to your logical keystore.
-export SIGV4_SECRET_ACCESS_KEY="1234567890123456789012345678901234567890123="
+# Secret access key must have between 43 and 64 characters. Valid characters are a-z, A-Z, 0-9, /, +, and =
+export SIGV4_SECRET_ACCESS_KEY="==========================================="
 # Change this to a test key id supported by your logical keystore.
 export KEY_ID="foo"
 
@@ -81,8 +85,7 @@ VERBOSE=-iv DEBUG=1 ./test-xks-proxy
 
 The following environment variables can be used to override the default settings.
 
-* `XKS_PROXY_HOST` - the xks-proxy endpoint
-    * Default to `"is-load.xksproxy.kms.aws.dev"`
+* `XKS_PROXY_HOST` - the xks-proxy endpoint (Required)
 * `URI_PREFIX` - the xks-proxy URI prefix
     * Default to `"example/uri/path/prefix"`
 * `REGION` - the region used for SigV4 authentication
