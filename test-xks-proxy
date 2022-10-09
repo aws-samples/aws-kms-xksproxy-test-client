@@ -13,13 +13,15 @@ Version 1.1.0.  Sample usages:
     # Set some environment variables to run the tests:
 
     # Change this to your XKS Proxy endpoint to test.
-    export XKS_PROXY_HOST="is-load.xksproxy.kms.aws.dev"
+    export XKS_PROXY_HOST="myxksproxy.domain.com"
     # Change this to the URI_PREFIX of a logical keystore supported by your XKS Proxy.
     export URI_PREFIX="example/uri/path/prefix"
     # Change this to the Access key ID for request authentication to your logical keystore.
-    export SIGV4_ACCESS_KEY_ID="AKIA4GBY3I6JCE5M2HPM"
+    # Valid characters are a-z, A-Z, 0-9, /, - (hyphen), and _ (underscore)
+    export SIGV4_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
     # Change this to the Secret access key for request authentication to your logical keystore.
-    export SIGV4_SECRET_ACCESS_KEY="1234567890123456789012345678901234567890123="
+    # Secret access key must have between 43 and 64 characters. Valid characters are a-z, A-Z, 0-9, /, +, and =
+    export SIGV4_SECRET_ACCESS_KEY="==========================================="
     # Change this to a test key id supported by your logical keystore.
     export KEY_ID="foo"
 
