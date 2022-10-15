@@ -5,6 +5,11 @@ on:
   push:
     branches: [ "main" ]
 
+# https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
 jobs:
   style:
     name: Shellcheck
@@ -25,20 +30,35 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       URI_PREFIX: 'example/uri/path/prefix'
-      SIGV4_ACCESS_KEY_ID: ${{ secrets.SIGV4_ACCESS_KEY_ID }}
-      SIGV4_SECRET_ACCESS_KEY: ${{ secrets.SIGV4_SECRET_ACCESS_KEY }}
       KEY_ID: 'foo'
     steps:
-      # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
-      - name: Skip Integration Tests unless this is a pull request or if the secrets are available
-        run: exit
+      # https://github.com/aws-actions/configure-aws-credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: arn:aws:iam::552841731547:role/AccessRoleFromGithub
+          aws-region: us-east-1
+
+      # https://github.com/marketplace/actions/aws-secrets-manager-github-action
+      - name: Get Secrets from AWS Secret Manager
+        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        with:
+          secret-ids: |
+            arn:aws:secretsmanager:us-east-1:552841731547:secret:xksproxy-client-test-sigv4-o7vSkf
+            arn:aws:secretsmanager:us-east-1:552841731547:secret:xksproxy-client-test-mtls-tEfUV5
+          parse-json-secrets: true
+
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - name: Set XKS Proxy Sigv4 Access Credentials
+        # Make the common environment variables available to subsequent steps
+        run: |
+          echo "SIGV4_ACCESS_KEY_ID=${{ env.XKSPROXY_CLIENT_TEST_SIGV4_SIGV4_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "SIGV4_SECRET_ACCESS_KEY=${{ env.XKSPROXY_CLIENT_TEST_SIGV4_SIGV4_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
 
       - name: Checkout
-        if: github.event_name == 'pull_request' || env.SIGV4_SECRET_ACCESS_KEY != ''
         uses: actions/checkout@v3
 
       - name: Run all https tests against xks-proxy
-        if: github.event_name == 'pull_request' || env.SIGV4_SECRET_ACCESS_KEY != ''
         env:
           XKS_PROXY_HOST: ${{ secrets.XKS_PROXY_HTTPS_TEST_HOST }}
         run: |
@@ -50,32 +70,27 @@ jobs:
 
       - name: Prepare mTLS key
         env:
-          MTLS_TEST_KEY: ${{ secrets.MTLS_TEST_KEY }}
-        if: github.event_name == 'pull_request' || env.MTLS_TEST_KEY != ''
-        run: 'echo "$MTLS_TEST_KEY" > "./key.pem"'
+          MTLS_TEST_KEY: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_KEY_PEM }}
+        run: 'echo -ne "$MTLS_TEST_KEY" > "./key.pem"'
         shell: bash
 
       - name: Prepare mTLS cert
         env:
-          MTLS_TEST_CERT: ${{ secrets.MTLS_TEST_CERT }}
-        if: github.event_name == 'pull_request' || env.MTLS_TEST_CERT != ''
-        run: 'echo "$MTLS_TEST_CERT" > "./cert.pem"'
+          MTLS_TEST_CERT: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_CERT_PEM }}
+        run: 'echo -ne "$MTLS_TEST_CERT" > "./cert.pem"'
         shell: bash
 
       - name: Prepare mTLS CA bundle
         env:
           MTLS_CA_BUNDLE: ${{ secrets.MTLS_CA_BUNDLE }}
-        if: github.event_name == 'pull_request' || env.MTLS_CA_BUNDLE != ''
         run: 'echo "$MTLS_CA_BUNDLE" > "./ca-bundle.pem"'
         shell: bash
 
       - name: Run all mTLS tests against xks-proxy
         env:
-          MTLS_TEST_KEY: ${{ secrets.MTLS_TEST_KEY }}
           XKS_PROXY_HOST: ${{ secrets.XKS_PROXY_MTLS_TEST_HOST }}
           CURL_CA_BUNDLE: ./ca-bundle.pem
           MTLS: "--key ./key.pem --cert ./cert.pem"
-        if: github.event_name == 'pull_request' || env.MTLS_TEST_KEY != ''
         run: |
           trap 'rm -f ./*.pem' exit
           ./test-xks-proxy -a | tee ./response.txt
