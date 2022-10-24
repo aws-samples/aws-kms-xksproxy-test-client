@@ -36,16 +36,16 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          role-to-assume: arn:aws:iam::552841731547:role/AccessRoleFromGithub
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_TEST_ACCOUNT_ID }}:role/AccessRoleFromGithub
+          aws-region: ${{ secrets.AWS_TEST_ACCOUNT_REGION }}
 
       # https://github.com/marketplace/actions/aws-secrets-manager-github-action
       - name: Get Secrets from AWS Secret Manager
         uses: aws-actions/aws-secretsmanager-get-secrets@v1
         with:
           secret-ids: |
-            arn:aws:secretsmanager:us-east-1:552841731547:secret:xksproxy-client-test-sigv4-o7vSkf
-            arn:aws:secretsmanager:us-east-1:552841731547:secret:xksproxy-client-test-mtls-tEfUV5
+            arn:aws:secretsmanager:${{ secrets.AWS_TEST_ACCOUNT_REGION }}:${{ secrets.AWS_TEST_ACCOUNT_ID }}:secret:${{ secrets.SECRET_NAME_TEST_SIGV4 }}
+            arn:aws:secretsmanager:${{ secrets.AWS_TEST_ACCOUNT_REGION }}:${{ secrets.AWS_TEST_ACCOUNT_ID }}:secret:${{ secrets.SECRET_NAME_TEST_MTLS }}
           parse-json-secrets: true
 
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
