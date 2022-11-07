@@ -14,31 +14,37 @@ implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTT
 * `awk`
 * `base64`
 * `bash 4.2+`
+* `cat`
 * `curl 7.75+` (i.e. with `sigv4` support)
+* `dd`
 * `echo`
+* `env`
 * `head`
 * `jq 1.5+`
 * `mktemp`
 * `printf`
 * `read`
+* `rm`
 * `sed`
+* `sh`
 * `sha256sum`
 * `tr`
+* `uuidgen`
 * `xxd`
 
 ## Examples
 
 ```bash
 # Change this to your XKS Proxy endpoint to test.
-export XKS_PROXY_HOST="myxksproxy.domain.com"
+export XKS_PROXY_HOST="localhost"
 # Change this to the URI_PREFIX of a logical keystore supported by your XKS Proxy.
 export URI_PREFIX="example/uri/path/prefix"
 # Change this to the Access key ID for request authentication to your logical keystore.
 # Valid characters are a-z, A-Z, 0-9, /, - (hyphen), and _ (underscore)
-export SIGV4_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
+export SIGV4_ACCESS_KEY_ID="BETWEEN2TENAND3TENCHARACTERS"
 # Change this to the Secret access key for request authentication to your logical keystore.
 # Secret access key must have between 43 and 64 characters. Valid characters are a-z, A-Z, 0-9, /, +, and =
-export SIGV4_SECRET_ACCESS_KEY="==========================================="
+export SIGV4_SECRET_ACCESS_KEY="PleaseReplaceThisWithSomeSecretOfLength43To64"
 # Change this to a test key id supported by your logical keystore.
 export KEY_ID="foo"
 
@@ -49,6 +55,20 @@ export KEY_ID="foo"
 # key that can neither encrypt nor decrypt. You can specify the respective key id's with
 # the environment variables ENCRYPT_ONLY_KEY_ID, DECRYPT_ONLY_KEY_ID and IMPOTENT_KEY_ID.
 ./test-xks-proxy -a
+```
+
+## Using Docker
+
+If you have [Docker](https://www.docker.com/) installed, you can build this client into a Docker image and run the tests via the Docker container.  This has the benefit of automatically getting all the necessary versions of dependencies such as `curl`, `jq`, etc.
+
+```bash
+# Build docker image named test-xks-proxy
+make docker
+
+# Then run everything in the same way as you would with "test-xks-proxy",
+# but replacing "test-xks-proxy" with "test-xks-proxy-via-docker".
+# For example, to get help,
+./test-xks-proxy-via-docker -h
 ```
 
 ### Examples of running in other modes
@@ -85,7 +105,13 @@ VERBOSE=-iv DEBUG=1 ./test-xks-proxy
 
 The following environment variables can be used to override the default settings.
 
-* `XKS_PROXY_HOST` - the xks-proxy endpoint (Required)
+* `SIGV4_ACCESS_KEY_ID` - Access key ID for request authentication to your logical keystore.
+ Valid characters are a-z, A-Z, 0-9, /, - (hyphen), and _ (underscore)
+    * Default to `"BETWEEN2TENAND3TENCHARACTERS"`
+* `SIGV4_SECRET_ACCESS_KEY` - (Required) Secret access key for request authentication to your logical keystore. Secret access key must have between 43 and 64 characters. Valid characters are a-z, A-Z, 0-9, /, +, and =
+    * Default to `"PleaseReplaceThisWithSomeSecretOfLength43To64"`
+* `XKS_PROXY_HOST` - the xks-proxy endpoint
+    * Default to `"localhost"`
 * `URI_PREFIX` - the xks-proxy URI prefix
     * Default to `"example/uri/path/prefix"`
 * `REGION` - the region used for SigV4 authentication

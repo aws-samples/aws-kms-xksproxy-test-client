@@ -18,10 +18,10 @@ Version 1.1.0.  Sample usages:
     export URI_PREFIX="example/uri/path/prefix"
     # Change this to the Access key ID for request authentication to your logical keystore.
     # Valid characters are a-z, A-Z, 0-9, /, - (hyphen), and _ (underscore)
-    export SIGV4_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
+    export SIGV4_ACCESS_KEY_ID="BETWEEN2TENAND3TENCHARACTERS"
     # Change this to the Secret access key for request authentication to your logical keystore.
     # Secret access key must have between 43 and 64 characters. Valid characters are a-z, A-Z, 0-9, /, +, and =
-    export SIGV4_SECRET_ACCESS_KEY="==========================================="
+    export SIGV4_SECRET_ACCESS_KEY="PleaseReplaceThisWithSomeSecretOfLength43To64"
     # Change this to a test key id supported by your logical keystore.
     export KEY_ID="foo"
 
