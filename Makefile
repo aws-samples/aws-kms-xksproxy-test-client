@@ -4,7 +4,7 @@ RELEASE := 0
 SOURCE_BUNDLE := $(NAME)-$(VERSION)-$(RELEASE).txz
 PROJECT_ROOTDIR := $(shell basename $(CURDIR))
 
-.PHONY: release
+.PHONY: release docker
 release: build/$(SOURCE_BUNDLE)
 
 build/$(SOURCE_BUNDLE):
@@ -17,6 +17,9 @@ build/$(SOURCE_BUNDLE):
 		--exclude=$(PROJECT_ROOTDIR)/build \
 		--exclude=$(PROJECT_ROOTDIR)/.DS_Store \
 		$(PROJECT_ROOTDIR)
+
+docker:
+	docker build -t test-xks-proxy .
 
 .PHONY: clean distclean
 clean:

@@ -3,8 +3,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+declare -r DEFAULT_SIGV4_ACCESS_KEY_ID="BETWEEN2TENAND3TENCHARACTERS"
+declare -r DEFAULT_SIGV4_SECRET_ACCESS_KEY="PleaseReplaceThisWithSomeSecretOfLength43To64"
 declare -r DEFAULT_SCHEME="https://"
-declare -r DEFAULT_XKS_PROXY_HOST=""
+declare -r DEFAULT_XKS_PROXY_HOST="localhost"
 declare -r DEFAULT_URI_PREFIX="example/uri/path/prefix"
 declare -r DEFAULT_REGION="us-east-1"
 declare -r DEFAULT_KEY_ID="foo"
@@ -17,6 +19,8 @@ declare -r DEFAULT_MTLS=""
 declare -ri DEFAULT_DEBUG=0
 declare -ri DEFAULT_ANSI_ESCAPE=1
 
+declare SIGV4_ACCESS_KEY_ID=${SIGV4_ACCESS_KEY_ID-${DEFAULT_SIGV4_ACCESS_KEY_ID}}
+declare SIGV4_SECRET_ACCESS_KEY=${SIGV4_SECRET_ACCESS_KEY-${DEFAULT_SIGV4_SECRET_ACCESS_KEY}}
 # xks-proxy endpoint (Required)
 declare XKS_PROXY_HOST=${XKS_PROXY_HOST-${DEFAULT_XKS_PROXY_HOST}}
 # xks-proxy URI prefix; The test client will append kms/xks/v1 to form the full URI

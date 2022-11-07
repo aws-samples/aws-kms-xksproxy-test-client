@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+docker run -it --rm --network="host" \
+--env-file <(env |grep -E '(XKS_PROXY_HOST|URI_PREFIX|REGION|VERBOSE|KEY_ID|ENCRYPT_ONLY_KEY_ID|DECRYPT_ONLY_KEY_ID|IMPOTENT_KEY_ID|SCHEME|SECURE|MTLS|DEBUG|ANSI_ESCAPE|SIGV4_ACCESS_KEY_ID|SIGV4_SECRET_ACCESS_KEY)') \
+    test-xks-proxy test-xks-proxy "$@"
