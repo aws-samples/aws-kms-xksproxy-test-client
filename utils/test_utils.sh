@@ -191,6 +191,12 @@ check_environment() {
         "bash --version | head -1 | sed -e 's/.*version \([0-9]*.[0-9]*\).*/\1/'"
     check_min_version "curl" "7.75" \
         "curl --version | head -1 | sed -e 's/^curl \([0-9]*.[0-9]*\).*/\1/'"
-    check_min_version "jq"   "1.5" \
-        "jq --version | head -1 | sed -e 's/^jq-\([0-9]*.[0-9]*\).*/\1/'"
+
+    local -r jq_version="$(jq --version | head -1)"
+    if [[ "$jq_version" = jq-master-* ]]; then
+        ((DEBUG)) && echo "jq version $jq_version is available ..." > /dev/stderr
+    else
+        check_min_version "jq" "1.5" \
+            "echo $jq_version | sed -e 's/^jq-\([0-9]*.[0-9]*\).*/\1/'"
+    fi
 }
