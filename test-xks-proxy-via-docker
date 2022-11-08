@@ -1,5 +1,35 @@
 #!/usr/bin/env bash
 
-docker run -it --rm --network="host" \
---env-file <(env |grep -E '(XKS_PROXY_HOST|URI_PREFIX|REGION|VERBOSE|KEY_ID|ENCRYPT_ONLY_KEY_ID|DECRYPT_ONLY_KEY_ID|IMPOTENT_KEY_ID|SCHEME|SECURE|MTLS|DEBUG|ANSI_ESCAPE|SIGV4_ACCESS_KEY_ID|SIGV4_SECRET_ACCESS_KEY)') \
+# https://stackoverflow.com/questions/3915040/how-to-obtain-the-absolute-path-of-a-file-via-shell-bash-zsh-sh
+# shellcheck disable=SC2164
+to_absolute_path() {
+    echo "$(cd "$(dirname -- "$1")" >/dev/null; pwd -P)/$(basename -- "$1")"
+}
+
+MOUNT_MTLS_PARAM=""
+if [[ -n "$MTLS" ]]; then
+    read -r -a parts <<< "$MTLS"
+    if (( ${#parts[@]} == 4 )); then
+        parts[1]=$(to_absolute_path "${parts[1]}")
+        parts[3]=$(to_absolute_path "${parts[3]}")
+        MTLS="${parts[*]}"
+        MOUNT_MTLS_PARAM="-v ${parts[1]}:${parts[1]} -v ${parts[3]}:${parts[3]}"
+    fi
+fi
+
+# For completeness when CURL_CA_BUNDLE is specified
+MOUNT_CA_BUNDLE_PARAM=""
+if [[ -n "$CURL_CA_BUNDLE" ]]; then
+    CURL_CA_BUNDLE=$(to_absolute_path "$CURL_CA_BUNDLE")
+    MOUNT_CA_BUNDLE_PARAM="-v $CURL_CA_BUNDLE:$CURL_CA_BUNDLE"
+fi
+
+# Used to handle "the input device is not a TTY" failure when run in Github action
+TTY=${TTY-"-it"}
+
+# shellcheck disable=SC2086
+docker run $TTY --rm --network="host" \
+$MOUNT_MTLS_PARAM \
+$MOUNT_CA_BUNDLE_PARAM \
+--env-file <(env |grep -E '(XKS_PROXY_HOST|URI_PREFIX|REGION|VERBOSE|KEY_ID|ENCRYPT_ONLY_KEY_ID|DECRYPT_ONLY_KEY_ID|IMPOTENT_KEY_ID|SCHEME|SECURE|MTLS|DEBUG|ANSI_ESCAPE|SIGV4_ACCESS_KEY_ID|SIGV4_SECRET_ACCESS_KEY|CURL_CA_BUNDLE)') \
     test-xks-proxy test-xks-proxy "$@"

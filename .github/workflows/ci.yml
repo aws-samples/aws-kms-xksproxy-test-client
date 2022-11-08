@@ -68,32 +68,50 @@ jobs:
               exit 1
           fi
 
-      - name: Prepare mTLS key
-        env:
-          MTLS_TEST_KEY: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_KEY_PEM }}
-        run: 'echo -ne "$MTLS_TEST_KEY" > "./key.pem"'
-        shell: bash
+      - name: Make Docker container
+        run: make docker
 
-      - name: Prepare mTLS cert
+      - name: Run all https tests against xks-proxy via Docker
         env:
-          MTLS_TEST_CERT: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_CERT_PEM }}
-        run: 'echo -ne "$MTLS_TEST_CERT" > "./cert.pem"'
-        shell: bash
+          XKS_PROXY_HOST: ${{ secrets.XKS_PROXY_HTTPS_TEST_HOST }}
+        run: |
+          TTY= ./test-xks-proxy-via-docker -a | tee ./response.txt
+          result=$(tail -1 ./response.txt)
+          if ! [[ "$result" =~ ^.*All && "$result" =~ PASSED.*$ ]]; then
+              exit 1
+          fi
 
       - name: Prepare mTLS CA bundle
         env:
           MTLS_CA_BUNDLE: ${{ secrets.MTLS_CA_BUNDLE }}
-        run: 'echo "$MTLS_CA_BUNDLE" > "./ca-bundle.pem"'
+        run: 'echo -n "$MTLS_CA_BUNDLE" > "./ca-bundle.pem"'
         shell: bash
 
       - name: Run all mTLS tests against xks-proxy
         env:
+          MTLS_TEST_KEY: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_KEY_PEM }}
+          MTLS_TEST_CERT: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_CERT_PEM }}
           XKS_PROXY_HOST: ${{ secrets.XKS_PROXY_MTLS_TEST_HOST }}
           CURL_CA_BUNDLE: ./ca-bundle.pem
-          MTLS: "--key ./key.pem --cert ./cert.pem"
+          # Note both the keys and certs are encoded with '\n' in AWS Secrets Manager.
+          # Hence the use of -e to convert them into line breaks.
+          MTLS: --key <(echo -ne "$MTLS_TEST_KEY") --cert <(echo -ne "$MTLS_TEST_CERT")
         run: |
           trap 'rm -f ./*.pem' exit
           ./test-xks-proxy -a | tee ./response.txt
+          result=$(tail -1 ./response.txt)
+          if ! [[ "$result" =~ ^.*All && "$result" =~ PASSED.*$ ]]; then
+              exit 1
+          fi
+
+      - name: Run all mTLS tests against xks-proxy via Docker
+        env:
+          MTLS_TEST_KEY: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_KEY_PEM }}
+          MTLS_TEST_CERT: ${{ env.XKSPROXY_CLIENT_TEST_MTLS_CERT_PEM }}
+          XKS_PROXY_HOST: ${{ secrets.XKS_PROXY_MTLS_TEST_HOST }}
+          MTLS: --key <(echo -ne "$MTLS_TEST_KEY") --cert <(echo -ne "$MTLS_TEST_CERT")
+        run: |
+          TTY= ./test-xks-proxy-via-docker -a | tee ./response.txt
           result=$(tail -1 ./response.txt)
           if ! [[ "$result" =~ ^.*All && "$result" =~ PASSED.*$ ]]; then
               exit 1
