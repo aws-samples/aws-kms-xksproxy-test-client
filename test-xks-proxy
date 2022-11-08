@@ -103,4 +103,11 @@ for script in "${scripts[@]}"; do
     ((total_failure += counts[1]))
 done
 
+if [[ -n "$MTLS" ]]; then
+    ./test_negative_mtls "$tmpdir"
+    read -d '' -r -a counts <<< "$(cat "$tmpdir/test_negative_mtls.counts")"
+    ((total_success += counts[0]))
+    ((total_failure += counts[1]))
+fi
+
 summarize "$total_success" "$total_failure"

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# shellcheck disable=SC2015
+# shellcheck disable=SC2154
+
+# shellcheck disable=SC1091
+source ./utils/test_utils.sh
+
+declare -i success=0 failure=0
+
+main() {
+    json_body() {
+        local -r uuid="$(uuidgen)"
+        cat <<-EOM
+{
+    "requestMetadata": {
+        "kmsOperation": "KmsHealthCheck",
+        "kmsRequestId": "${uuid,,}"
+    }
+}
+EOM
+    }
+    export SCHEME="https://"
+    export VERBOSE=-v
+    # ${k%_key.pem} removes the "_key.pem" suffix from $k
+    # ${prefix#bogus-mtls/} removes the "bogus-mtls/" prefix from $prefix
+    for k in $(echo bogus-mtls/*_key.pem); do
+        local prefix=${k%_key.pem}
+        MTLS="--key $k --cert ${prefix}_cert.pem" \
+            run_test "health" \
+            "$(json_body)" \
+            "GetHealthStatus via mTLS with a ${prefix#bogus-mtls/} client certificate" \
+            "TLS alert, handshake failure" && ((++success)) || ((++failure))
+    done
+}
+
+if ((${#@})); then
+    counts_file="$1/$(basename "$0").counts"
+    declare -r counts_file
+    main
+    echo "$success $failure" > "$counts_file"
+else
+    check_environment
+    main
+    summarize "$success" "$failure"
+fi
