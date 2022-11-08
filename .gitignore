@@ -2,4 +2,6 @@ build
 Config
 .DS_Store
 mtls
+**/alpha*.pem
+**/beta*.pem
 
