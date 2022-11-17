@@ -2,8 +2,8 @@
 
 # aws-kms-xksproxy-test-client
 
-This package provides a sample `curl` based utility for reference by external customers to test against
-implemenations of the AWS KMS External Keystore (XKS) Proxy API over HTTP or HTTPS.
+This package provides a sample `curl` based utility to test external key store proxy implementations for compliance
+against the [AWS KMS External Keystore (XKS) Proxy API Specification](https://github.com/aws/aws-kms-xksproxy-api-spec).
 
 # Version
 
