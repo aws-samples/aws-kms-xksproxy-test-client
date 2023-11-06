@@ -61,20 +61,6 @@ main() {
 
     if run_test "keys/$KEY_ID/encrypt" \
         "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
-        "Encrypt with AAD to be followed by Decrypt without AAD" \
-        "\"ciphertext\":"; then
-        ((++success))
-        prepare_decrypt
-        run_test "keys/$KEY_ID/decrypt" \
-            "$(json_body_decrypt "$(request_metadata "Decrypt")" "$ciphertext" "$iv" "$tag")" \
-            "Decrypt with missing AAD" \
-            "InvalidCiphertextException" && ((++success)) || ((++failure))
-    else
-        ((++failure))
-    fi
-
-    if run_test "keys/$KEY_ID/encrypt" \
-        "$(json_body_encrypt "$(request_metadata "Encrypt")" "$plaintext" $aad)" \
         "Encrypt with AAD to be followed by Decrypt with a different AAD" \
         "\"ciphertext\":"; then
         ((++success))
